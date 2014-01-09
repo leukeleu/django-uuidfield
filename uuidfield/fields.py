@@ -3,6 +3,7 @@ import uuid
 from django import forms
 from django.db.models import Field, SubfieldBase
 from django.utils.encoding import smart_unicode
+from django.db import connection
 
 try:
     # psycopg2 needs us to register the uuid type
@@ -10,6 +11,18 @@ try:
     psycopg2.extras.register_uuid()
 except (ImportError, AttributeError):
     pass
+
+
+_database_supports_uuid = None
+
+def database_supports_uuid():
+    global _database_supports_uuid
+
+    if _database_supports_uuid == None:
+        # NB. Only works with single database
+        _database_supports_uuid = 'postgres' in connection.vendor
+
+    return _database_supports_uuid
 
 
 class StringUUID(uuid.UUID):
@@ -23,7 +36,9 @@ class StringUUID(uuid.UUID):
         return unicode(str(self))
 
     def __str__(self):
-        if self.hyphenate:
+        # Return hyphenated string if the database supports uuids
+        # This makes sure that str(pk) == str(foreign_key)
+        if self.hyphenate or database_supports_uuid():
             return super(StringUUID, self).__str__()
 
         return self.hex

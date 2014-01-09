@@ -5,6 +5,7 @@ from django.test import TestCase
 
 from uuidfield.tests.models import (AutoUUIDField, ManualUUIDField,
     NamespaceUUIDField, BrokenNamespaceUUIDField, HyphenatedUUIDField)
+from uuidfield.fields import database_supports_uuid
 
 
 class UUIDFieldTestCase(TestCase):
@@ -12,7 +13,12 @@ class UUIDFieldTestCase(TestCase):
     def test_auto_uuid4(self):
         obj = AutoUUIDField.objects.create()
         self.assertTrue(obj.uuid)
-        self.assertEquals(len(obj.uuid), 32)
+
+        if database_supports_uuid():
+            self.assertEquals(len(obj.uuid), 36)
+        else:
+            self.assertEquals(len(obj.uuid), 32)
+
         self.assertTrue(isinstance(obj.uuid, uuid.UUID))
         self.assertEquals(obj.uuid.version, 4)
 
@@ -22,14 +28,24 @@ class UUIDFieldTestCase(TestCase):
     def test_manual(self):
         obj = ManualUUIDField.objects.create(uuid=uuid.uuid4())
         self.assertTrue(obj)
-        self.assertEquals(len(obj.uuid), 32)
+
+        if database_supports_uuid():
+            self.assertEquals(len(obj.uuid), 36)
+        else:
+            self.assertEquals(len(obj.uuid), 32)
+
         self.assertTrue(isinstance(obj.uuid, uuid.UUID))
         self.assertEquals(obj.uuid.version, 4)
 
     def test_namespace(self):
         obj = NamespaceUUIDField.objects.create()
         self.assertTrue(obj)
-        self.assertEquals(len(obj.uuid), 32)
+
+        if database_supports_uuid():
+            self.assertEquals(len(obj.uuid), 36)
+        else:
+            self.assertEquals(len(obj.uuid), 32)
+
         self.assertTrue(isinstance(obj.uuid, uuid.UUID))
         self.assertEquals(obj.uuid.version, 5)
 
