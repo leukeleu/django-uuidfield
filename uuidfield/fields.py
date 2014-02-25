@@ -2,8 +2,12 @@ import uuid
 
 from django import forms
 from django.db.models import Field, SubfieldBase
-from django.utils.encoding import smart_unicode
 from django.db import connection
+
+try:
+    from django.utils.encoding import smart_unicode
+except ImportError:
+    from django.utils.encoding import smart_text as smart_unicode
 
 try:
     # psycopg2 needs us to register the uuid type
@@ -122,7 +126,10 @@ class UUIDField(Field):
         Casts uuid.UUID values into the format expected by the back end
         """
         if isinstance(value, uuid.UUID):
-            return str(value)
+            value = str(value)
+        if isinstance(value, str):
+            if '-' in value:
+                return value.replace('-', '')
         return value
 
     def value_to_string(self, obj):
